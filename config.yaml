@@ -1,0 +1,19 @@
+recording:
+  # MKV crescente gravado pelo OBS (ver obs-config/README-obs-setup.md)
+  file: "./grava/culto.mkv"
+  audio_track: 0
+
+detector:
+  hop_seconds: 1.0
+  threshold: 0.5
+  min_sustain_seconds: 2.0
+  # classes do AudioSet/YAMNet. Default: Applause (aplauso de congregação)
+  classes: ["Applause"]
+
+clipper:
+  pre_seconds: 5
+  post_seconds: 25
+  min_duration_seconds: 4
+  cooldown_seconds: 60
+  output_dir: "./cultos"
+  label: "aplauso"
