@@ -2,15 +2,24 @@
 
 ## 1. Gravação
 
-1. **Configurações → Saída → Gravação**
-   - Formato: **MKV** (essential: arquivo crescente é lido pelo clipper em tempo real)
-   - Caminho: pasta `./grava/` do repo
-   - Nome: fixo, ex.: `culto.mkv`
-2. **Configurações → Avançado**
-   - Desmarque "Fechar arquivo ao iniciar/parar gravação" se aplicável
-   - Se gravar tracks separadas (mic / música), confira o índice no
-     `config.yaml` → `audio_track`
-3. Use uma **cena** com as fontes do culto (câmera + captura + overlay).
+**Configurações → Saída → Modo de Saída: Avançado → aba Gravação:**
+
+- Tipo: **Padrão**
+- Caminho da gravação: `/Users/jonathan/obscut/grava` (a pasta `grava/` do repo)
+- Formato de gravação: **MKV (Matroska)** — essential: arquivo crescente é
+  lido pelo clipper em tempo real
+- Formatação de nome de arquivo: `culto` — só o nome, **sem macros**
+  (`%Y%m%d` etc.) pra sempre gravar em `culto.mkv`
+- Se o arquivo existir: **Sobrescrever** (garante MKV novo a cada gravação)
+- Video encoder: Apple VT H264/H265 · Audio encoder: AAC
+
+**Configurações → Avançado:**
+
+- Se gravar tracks separadas (mic / música), confira o índice no
+  `config.yaml` → `audio_track`
+
+Use uma **cena** com as fontes do culto (câmera + captura + overlay).
+Antes de cada gravação: `rm -f grava/culto.mkv` (garante arquivo zerado).
 
 ## 2. Fluxo de uso
 
