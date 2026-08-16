@@ -2,3 +2,4 @@ tensorflow>=2.15
 tensorflow-hub>=0.15
 numpy>=1.26
 PyYAML>=6.0
+faster-whisper>=1.0

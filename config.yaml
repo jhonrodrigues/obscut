@@ -1,7 +1,13 @@
 recording:
-  # MKV crescente gravado pelo OBS (ver obs-config/README-obs-setup.md)
+  # type: file = MKV crescente do OBS | stream = entrada ffmpeg genérica (NDI, URL, dispositivo)
+  type: "file"
   file: "./grava/culto.mkv"
   audio_track: 0
+  # só p/ type: stream. Ex.: NDI (precisa ffmpeg com libndi_newtek):
+  #   ["-f", "libndi_newtek", "-i", "NomeCanal"]
+  # teste sem NDI:
+  #   ["-f", "lavfi", "-i", "sine=frequency=440:duration=30"]
+  stream_args: ["-f", "libndi_newtek", "-i", "CanalNDI"]
 
 detector:
   hop_seconds: 1.0
@@ -22,6 +28,23 @@ signals:
     baseline_seconds: 15
     spike_factor: 2.5
     speech_min: 0.3
+  keywords:
+    enabled: true
+    threshold: 0.6
+    min_sustain: 1.5
+    pre_seconds: 4
+    post_seconds: 30
+    batch_seconds: 10
+    model_size: "small"
+    language: "pt"
+    score_divisor: 8.0
+    words:
+      "glória a deus": 8
+      "vamos adorar": 7
+      "levanta as mãos": 6
+      "profetizo": 6
+      "aleluia": 2
+      "amém": 1
 
 clipper:
   cooldown_seconds: 60
