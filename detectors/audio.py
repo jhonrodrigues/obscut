@@ -14,7 +14,7 @@ def _load_class_indices(class_map_path: str, wanted: List[str]) -> List[int]:
         parts = row.split(",")
         if len(parts) < 3:
             continue
-        name, index = parts[1], parts[0]
+        index, name = parts[0], parts[2]  # formato: index,mid,display_name
         if name in wanted:
             indices.append(int(index))
     return indices
