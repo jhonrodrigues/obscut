@@ -21,7 +21,11 @@ OBS grava MKV contínuo (ou entrada NDI/URL via ffmpeg)
 
 ## Setup
 
+Setup completo pra máquina nova (Mac, Homebrew, deps, primeira execução):
+ver **[SETUP.md](SETUP.md)**.
+
 ```bash
+# resumo Linux
 sudo apt install ffmpeg
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt   # pesado: TF (~600MB) + whisper model
