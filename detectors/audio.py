@@ -8,16 +8,14 @@ import tensorflow_hub as hub
 _WINDOW = 15600  # YAMNet espera 0.975s de áudio = 15600 amostras @ 16kHz
 
 
-def _load_class_indices(class_map_path: str, wanted: List[str]) -> List[int]:
-    indices = []
+def _load_names(class_map_path: str) -> List[str]:
+    names = []
     for row in Path(class_map_path).read_text(encoding="utf-8").splitlines()[1:]:
         parts = row.split(",")
         if len(parts) < 3:
             continue
-        index, name = parts[0], parts[2]  # formato: index,mid,display_name
-        if name in wanted:
-            indices.append(int(index))
-    return indices
+        names.append(parts[2])  # formato: index,mid,display_name
+    return names
 
 
 class YAMNetDetector:
@@ -26,13 +24,23 @@ class YAMNetDetector:
     def __init__(self, classes: List[str]):
         self.model = hub.load("https://tfhub.dev/google/yamnet/1")
         class_map = self.model.class_map_path().numpy().decode("utf-8")
-        self.target_indices = _load_class_indices(class_map, classes)
+        self.class_names = _load_names(class_map)
+        self.target_indices = [
+            i for i, name in enumerate(self.class_names) if name in classes
+        ]
         if not self.target_indices:
             raise ValueError(f"nenhuma classe YAMNet encontrada para: {classes}")
 
-    def score(self, chunk: np.ndarray) -> float:
+    def scores(self, chunk: np.ndarray) -> np.ndarray:
         if chunk.shape[0] < _WINDOW:
-            return 0.0
+            return np.zeros(len(self.class_names))
         wav = chunk[:_WINDOW]  # 1-D; YAMNet faz o framing internamente
-        scores = self.model(wav)[0].numpy()  # (1, 521) -> (521,)
-        return float(scores[0][self.target_indices].max())
+        return self.model(wav)[0].numpy()[0]  # (1, 521) -> (521,)
+
+    def score(self, chunk: np.ndarray) -> float:
+        return float(self.scores(chunk)[self.target_indices].max())
+
+    def top(self, chunk: np.ndarray, k: int = 5) -> List[str]:
+        s = self.scores(chunk)
+        idx = np.argsort(s)[::-1][:k]
+        return [f"{self.class_names[i]}={s[i]:.2f}" for i in idx]

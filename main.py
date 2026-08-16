@@ -15,6 +15,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="OBS live clipper — M1")
     parser.add_argument("-c", "--config", default="config.yaml")
     parser.add_argument("-f", "--file", help="override do caminho do MKV")
+    parser.add_argument("--debug", action="store_true", help="mostra top-5 classes por janela")
     args = parser.parse_args()
 
     with open(args.config, encoding="utf-8") as f:
@@ -48,6 +49,9 @@ def main() -> None:
             continue
         prob = detector.score(chunk)
         t += hop
+        if args.debug:
+            print(f"t={t:7.1f}s  target={prob:.2f}  | " + "  ".join(detector.top(chunk)))
+            continue
         event = engine.feed(t, prob)
         if event:
             clip = cut(

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Gera um MKV de teste com "aplauso" sintético (ruído marrom com tremolo)
-# em janelas conhecidas, pra testar o pipeline sem OBS.
+# Gera um MKV de teste com "aplauso" sintético (rajadas de ruído branco,
+# som de palma mais realista que tremolo) em janelas conhecidas.
 #
 # Janelas de aplauso: t=8..12s e t=22..27s.
 set -euo pipefail
@@ -9,8 +9,7 @@ cd "$(dirname "$0")/.."
 mkdir -p grava
 
 ffmpeg -hide_banner -loglevel error -y \
-  -f lavfi -i "anoisesrc=color=brown:duration=40:amplitude=0.5" \
-  -af "tremolo=f=5:d=1,volume=enable='between(t,8,12)+between(t,22,27)':volume=2,volume=enable='not(between(t,8,12)+between(t,22,27))':volume=0.08" \
+  -f lavfi -i "aevalsrc=expr='0.8*random(0)*lt(mod(n,3600),400)*if(between(t,8,12)+between(t,22,27),1,0.05)':s=44100:d=40" \
   -c:a aac -b:a 128k \
   grava/teste.mkv
 
