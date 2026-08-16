@@ -43,6 +43,14 @@ class AudioSource(ABC):
     def alive(self) -> bool:
         return self._proc is not None and self._proc.poll() is None
 
+    def stderr_tail(self) -> str:
+        if self._proc and self._proc.stderr:
+            try:
+                return self._proc.stderr.read().decode("utf-8", "replace")[-500:]
+            except Exception:
+                return ""
+        return ""
+
 
 class MKVTail(AudioSource):
     """Lê áudio do MKV crescente (gravação contínua do OBS)."""

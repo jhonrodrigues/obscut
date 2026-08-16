@@ -1,7 +1,8 @@
+import os
 import threading
 import time
 from collections import deque
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from detectors.audio import YAMNetDetector
 from detectors.source import MKVTail, StreamSource
@@ -109,18 +110,40 @@ class Pipeline:
         try:
             if not self.no_model:
                 self._load_models()
-            src.start()
-            src_label = " ".join(rec["stream_args"]) if rec["type"] == "stream" else rec["file"]
-            self._log(f"ouvindo {src_label} — sinais: {', '.join(self.signals_cfg)}")
 
+            started = False
+            read_some = False
+            retries = 0
             while not self._stop.is_set():
+                if not started:
+                    if rec["type"] == "file" and not os.path.exists(rec["file"]):
+                        self._log("aguardando arquivo nascer...")
+                        time.sleep(2)
+                        continue
+                    src.start()
+                    started = True
+                    read_some = False
+                    src_label = " ".join(rec["stream_args"]) if rec["type"] == "stream" else rec["file"]
+                    self._log(f"ouvindo {src_label} — sinais: {', '.join(self.signals_cfg)}")
+
                 chunk = src.read(self.hop)
                 if chunk is None:
                     if not src.alive:
-                        self._log("fim do arquivo — encerrando")
-                        break
+                        err = src.stderr_tail()
+                        if read_some:
+                            self._log("fim do arquivo — encerrando")
+                            break
+                        retries += 1
+                        if retries > 10:
+                            self._log(f"ffmpeg falhou sem dados: {err}")
+                            break
+                        self._log(f"ffmpeg saiu sem ler nada ({err.strip() or 'sem erro'}) — tentando de novo")
+                        started = False
+                        time.sleep(2)
+                        continue
                     time.sleep(self.hop)
                     continue
+                read_some = True
                 self.t += self.hop
 
                 if self.test_clip and not self._test_done and self.t >= self.cfg["test"]["clip_at"]:
