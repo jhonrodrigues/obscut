@@ -50,6 +50,11 @@ clipper:
   cooldown_seconds: 60
   output_dir: "./cultos"
 
+server:
+  # painel visual no OBS: Dock → Custom Browser Docks → http://127.0.0.1:8765
+  host: "127.0.0.1"
+  port: 8765
+
 test:
   clip_at: 8.0
   start: 3.0

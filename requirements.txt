@@ -3,3 +3,5 @@ tensorflow-hub>=0.15
 numpy>=1.26
 PyYAML>=6.0
 faster-whisper>=1.0
+fastapi>=0.110
+uvicorn>=0.29

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>obscut</title>
+<style>
+  :root {
+    --bg: #1a1d24; --panel: #22262f; --border: #333947;
+    --text: #d5dae4; --muted: #8b93a5; --accent: #4f8cff;
+    --green: #3ecf8e; --red: #ff5c5c; --amber: #f5a623;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 13px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif;
+    padding: 12px;
+  }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .top { justify-content: space-between; margin-bottom: 12px; }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: .3px; }
+  .badge {
+    padding: 3px 10px; border-radius: 999px; font-size: 11px;
+    font-weight: 600; background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .badge.on { color: #0d2118; background: var(--green); border-color: var(--green); }
+  .badge.loading { color: #2a1c00; background: var(--amber); border-color: var(--amber); }
+  .btn {
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px;
+    font-weight: 600; transition: background .15s;
+  }
+  .btn:hover { background: #2b303b; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #3d79e0; }
+  .btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 8px; }
+  .sig { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .sig input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+  .sig .lbl { width: 90px; font-weight: 600; }
+  .bar { flex: 1; height: 8px; background: #12151b; border-radius: 4px; overflow: hidden; }
+  .bar > div { height: 100%; background: var(--accent); transition: width .3s; }
+  .bar .v { font-size: 11px; color: var(--muted); width: 44px; text-align: right; }
+  .tick { font-size: 12px; color: var(--muted); }
+  #clips { list-style: none; max-height: 200px; overflow-y: auto; }
+  #clips li {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 4px 0; border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px;
+  }
+  #clips .size { color: var(--muted); }
+  #log {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px;
+    background: #12151b; border-radius: 6px; padding: 8px;
+    height: 150px; overflow-y: auto; white-space: pre-wrap; color: var(--text);
+  }
+  .empty { color: var(--muted); padding: 4px 0; }
+</style>
+</head>
+<body>
+  <div class="row top">
+    <h1>obscut — cortes ao vivo</h1>
+    <span id="badge" class="badge">parado</span>
+  </div>
+
+  <div class="row">
+    <button id="btnStart" class="btn primary">▶ Iniciar</button>
+    <button id="btnStop" class="btn danger">■ Parar</button>
+    <button id="btnOpen" class="btn">📂 Pasta de clips</button>
+    <span id="tick" class="tick"></span>
+  </div>
+
+  <div class="card">
+    <h2>Sinais (ao vivo)</h2>
+    <div id="signals"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clips recentes</h2>
+    <ul id="clips"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  async function api(path, opts) {
+    const r = await fetch('/api' + path, opts);
+    return r.json();
+  }
+
+  const SIG_ORDER = ['aplauso', 'pregador', 'keywords'];
+  const SIG_LABEL = { aplauso: 'Aplauso', pregador: 'Pregador', keywords: 'Keywords' };
+
+  function renderStatus(s) {
+    const badge = $('badge');
+    if (!s.running) { badge.textContent = 'parado'; badge.className = 'badge'; }
+    else if (!s.models) { badge.textContent = 'carregando modelos…'; badge.className = 'badge loading'; }
+    else { badge.textContent = 'rodando'; badge.className = 'badge on'; }
+    $('tick').textContent = 't=' + s.t.toFixed(0) + 's · clips: ' + s.clips_count;
+
+    const box = $('signals');
+    box.innerHTML = '';
+    for (const name of SIG_ORDER) {
+      if (!(name in s.signals)) continue;
+      const val = s.scores[name] || 0;
+      const enabled = s.signals[name];
+      const row = document.createElement('div');
+      row.className = 'sig';
+      row.innerHTML =
+        '<input type="checkbox" id="chk_' + name + '" ' + (enabled ? 'checked' : '') + '>' +
+        '<span class="lbl">' + SIG_LABEL[name] + '</span>' +
+        '<div class="bar"><div style="width:' + Math.round(val * 100) + '%"></div></div>' +
+        '<div class="v">' + val.toFixed(2) + '</div>';
+      const chk = row.querySelector('input');
+      chk.addEventListener('change', () =>
+        api('/signals/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ enabled: chk.checked }) }));
+      box.appendChild(row);
+    }
+  }
+
+  async function renderClips() {
+    const list = await api('/clips');
+    const ul = $('clips');
+    ul.innerHTML = '';
+    if (!list.length) { ul.innerHTML = '<li class="empty">nenhum clip ainda</li>'; return; }
+    for (const c of list) {
+      const li = document.createElement('li');
+      const kb = (c.size / 1024).toFixed(0);
+      li.innerHTML = '<span>' + c.name + '</span><span class="size">' + kb + ' KB</span>';
+      ul.appendChild(li);
+    }
+  }
+
+  async function renderLog() {
+    const lines = await api('/logs');
+    const el = $('log');
+    el.textContent = lines.join('\n');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  async function tick() {
+    try {
+      const s = await api('/status');
+      renderStatus(s);
+      await renderClips();
+      await renderLog();
+    } catch (e) { /* servidor parado */ }
+  }
+
+  $('btnStart').addEventListener('click', async () => { await api('/start', { method: 'POST' }); });
+  $('btnStop').addEventListener('click', async () => { await api('/stop', { method: 'POST' }); });
+  $('btnOpen').addEventListener('click', async () => { await api('/open', { method: 'POST' }); });
+
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>

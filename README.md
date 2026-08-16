@@ -38,10 +38,19 @@ Primeira execução baixa modelos YAMNet (~20MB) e whisper small (~460MB).
 
 ```bash
 source .venv/bin/activate
-python main.py            # com o MKV do OBS rolando
-python main.py --debug    # mostra scores + top-5 classes por segundo
+python main.py            # CLI: com o MKV do OBS rolando
+python server.py          # painel visual no OBS (Browser Dock, seção abaixo)
+python main.py --debug    # mostra scores por segundo
 python main.py --no-model --test-clip  # valida o corte sem IA (smoke test)
 ```
+
+## Painel visual no OBS (Browser Dock)
+
+`python server.py` sobe API local (`http://127.0.0.1:8765`) com um dock
+HTML. No OBS: **Dock → Custom Browser Docks** → Add Dock → URL
+`http://127.0.0.1:8765`. Painel com botões iniciar/parar, scores ao vivo,
+toggle de sinais, lista de clips e log. Detalhes em
+`obs-config/README-obs-setup.md` seção 5.
 
 ## Sinais
 
