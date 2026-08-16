@@ -13,8 +13,8 @@ def _load_names(class_map_path: str) -> List[str]:
     names = []
     with open(class_map_path, encoding="utf-8") as f:
         for row in csv.reader(f):
-            if len(row) < 3:
-                continue
+            if len(row) < 3 or not row[0].isdigit():
+                continue  # pula header e linhas malformadas
             names.append(row[2])  # formato: index,mid,display_name
     return names
 
