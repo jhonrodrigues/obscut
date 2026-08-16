@@ -33,6 +33,6 @@ class YAMNetDetector:
     def score(self, chunk: np.ndarray) -> float:
         if chunk.shape[0] < _WINDOW:
             return 0.0
-        wav = chunk[:_WINDOW][np.newaxis, :]
+        wav = chunk[:_WINDOW]  # 1-D; YAMNet faz o framing internamente
         scores = self.model(wav)[0].numpy()  # (1, 521) -> (521,)
-        return float(scores[self.target_indices].max())
+        return float(scores[0][self.target_indices].max())
