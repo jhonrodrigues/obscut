@@ -16,6 +16,8 @@ def main() -> None:
     parser.add_argument("-c", "--config", default="config.yaml")
     parser.add_argument("-f", "--file", help="override do caminho do MKV")
     parser.add_argument("--debug", action="store_true", help="mostra top-5 classes por janela")
+    parser.add_argument("--no-model", action="store_true", help="não carrega YAMNet")
+    parser.add_argument("--test-clip", action="store_true", help="força um clip em janela fixa (valida o corte)")
     args = parser.parse_args()
 
     with open(args.config, encoding="utf-8") as f:
@@ -27,7 +29,7 @@ def main() -> None:
         cfg["recording"]["file"],
         audio_track=cfg["recording"]["audio_track"],
     )
-    detector = YAMNetDetector(cfg["detector"]["classes"])
+    detector = YAMNetDetector(cfg["detector"]["classes"]) if not args.no_model else None
     engine = MomentEngine(cfg)
 
     stop = {"flag": False}
@@ -39,6 +41,7 @@ def main() -> None:
     src.start()
 
     t = 0.0
+    test_done = False
     while not stop["flag"]:
         chunk = src.read(hop)
         if chunk is None:
@@ -47,8 +50,25 @@ def main() -> None:
                 break
             time.sleep(hop)
             continue
-        prob = detector.score(chunk)
         t += hop
+
+        if args.test_clip and not test_done and t >= cfg["test"]["clip_at"]:
+            test_done = True
+            test = cfg["test"]
+            clip = cut(
+                cfg["recording"]["file"],
+                cfg["clipper"]["output_dir"],
+                test["start"],
+                test["end"],
+                "teste",
+            )
+            print(f"[teste] clip salvo: {clip}")
+            continue
+
+        if detector is None:
+            continue
+
+        prob = detector.score(chunk)
         if args.debug:
             print(f"t={t:7.1f}s  target={prob:.2f}  | " + "  ".join(detector.top(chunk)))
             continue

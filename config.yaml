@@ -17,3 +17,8 @@ clipper:
   cooldown_seconds: 60
   output_dir: "./cultos"
   label: "aplauso"
+
+test:
+  clip_at: 8.0
+  start: 3.0
+  end: 33.0
