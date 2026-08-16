@@ -31,6 +31,9 @@ class YAMNetDetector:
         ]
         if not self.target_indices:
             raise ValueError(f"nenhuma classe YAMNet encontrada para: {classes}")
+        self.speech_index = (
+            self.class_names.index("Speech") if "Speech" in self.class_names else 0
+        )
 
     def scores(self, chunk: np.ndarray) -> np.ndarray:
         if chunk.shape[0] < _WINDOW:
@@ -40,6 +43,9 @@ class YAMNetDetector:
 
     def score(self, chunk: np.ndarray) -> float:
         return float(self.scores(chunk)[self.target_indices].max())
+
+    def speech_prob(self, chunk: np.ndarray) -> float:
+        return float(self.scores(chunk)[self.speech_index])
 
     def top(self, chunk: np.ndarray, k: int = 5) -> List[str]:
         s = self.scores(chunk)

@@ -5,18 +5,27 @@ recording:
 
 detector:
   hop_seconds: 1.0
-  threshold: 0.5
-  min_sustain_seconds: 2.0
-  # classes do AudioSet/YAMNet. Applause = aplauso real; Clapping ajuda no teste sintético
-  classes: ["Applause", "Clapping"]
+
+signals:
+  aplauso:
+    classes: ["Applause", "Clapping"]
+    threshold: 0.5
+    min_sustain: 2.0
+    pre_seconds: 5
+    post_seconds: 25
+  pregador:
+    enabled: true
+    threshold: 0.5
+    min_sustain: 1.5
+    pre_seconds: 3
+    post_seconds: 20
+    baseline_seconds: 15
+    spike_factor: 2.5
+    speech_min: 0.3
 
 clipper:
-  pre_seconds: 5
-  post_seconds: 25
-  min_duration_seconds: 4
   cooldown_seconds: 60
   output_dir: "./cultos"
-  label: "aplauso"
 
 test:
   clip_at: 8.0

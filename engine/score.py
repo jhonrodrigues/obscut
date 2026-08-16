@@ -1,40 +1,46 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 class MomentEngine:
-    """Máquina de estados: detecta aplauso sustentado e agenda clip."""
+    """Máquina de estados multi-sinal.
 
-    def __init__(self, cfg: Dict):
-        det = cfg["detector"]
-        clip = cfg["clipper"]
-        self.threshold = det["threshold"]
-        self.min_sustain = det["min_sustain_seconds"]
-        self.pre = clip["pre_seconds"]
-        self.post = clip["post_seconds"]
-        self.min_duration = clip["min_duration_seconds"]
-        self.cooldown = clip["cooldown_seconds"]
-        self.label = clip.get("label", "momento")
-        self._active = False
+    Sustenta o melhor sinal acima do limiar; quando cai, agenda clip se
+    durou o mínimo. Cooldown compartilhado entre sinais (evita duplicar
+    o mesmo momento como aplauso e pregador).
+    """
+
+    def __init__(self, signals: Dict, clipper: Dict):
+        self.sigs = signals
+        self.cooldown = clipper["cooldown_seconds"]
+        self._active: Optional[str] = None
         self._start: Optional[float] = None
         self._cooldown_until = 0.0
 
-    def feed(self, t: float, prob: float) -> Optional[Dict]:
+    def feed(self, t: float, scores: Dict[str, float]) -> Optional[Dict]:
         if t < self._cooldown_until:
             return None
-        if prob >= self.threshold:
-            if not self._active:
-                self._active = True
+
+        above = {
+            name: val for name, val in scores.items()
+            if val >= self.sigs[name]["threshold"]
+        }
+        if above:
+            best = max(above, key=above.get)
+            if self._active is None:
+                self._active = best
                 self._start = t
             return None
 
-        if self._active:
-            self._active = False
+        if self._active is not None:
+            name = self._active
+            self._active = None
+            sig = self.sigs[name]
             dur = t - self._start
-            if dur >= self.min_duration:
+            if dur >= sig["min_sustain"]:
                 self._cooldown_until = t + self.cooldown
                 return {
-                    "start": max(0.0, self._start - self.pre),
-                    "end": t + self.post,
-                    "label": self.label,
+                    "start": max(0.0, self._start - sig["pre_seconds"]),
+                    "end": t + sig["post_seconds"],
+                    "label": name,
                 }
         return None

@@ -44,16 +44,19 @@ sustentado ≥ `min_duration_seconds`.
 
 | Parâmetro | O que faz |
 |---|---|
-| `threshold` | prob. YAMNet pra contar como aplauso (0.3 = sensível, 0.7 = só aplauso forte) |
-| `min_sustain_seconds` | mínimo contínuo p/ não disparar com palminha única |
-| `pre/post_seconds` | contexto antes/depois do momento no clip |
-| `cooldown_seconds` | gap entre clips (evita flood de aplauso contínuo) |
-| `classes` | troque por `["Singing"]`, `["Music"]` etc. do AudioSet |
+| `signals.aplauso.threshold` | prob. YAMNet pra contar como aplauso (0.3 = sensível, 0.7 = forte) |
+| `signals.aplauso.min_sustain` | mínimo contínuo p/ não disparar com palminha única |
+| `signals.pregador.threshold` | pico vocal do pregador (energia de fala acima do baseline) |
+| `signals.pregador.spike_factor` | quanto acima da média a fala precisa estar (2.5 = 2.5x) |
+| `signals.pregador.speech_min` | prob. mínima de Speech pra considerar fala |
+| `pre/post_seconds` | contexto antes/depois do momento no clip (por sinal) |
+| `clipper.cooldown_seconds` | gap entre clips (evita flood; compartilhado entre sinais) |
+| `signals.aplauso.classes` | classes AudioSet alvo (Applause, Clapping) |
 
 ## Roadmap
 
-- **M1** (este) — aplauso → clip
-- **M2** — score combinado (cooldown/dedup + pico vocal do pregador)
+- **M1** ✅ — aplauso → clip (pipeline completo validado)
+- **M2** (este) — pico vocal do pregador + score multi-sinal
 - **M3** — faster-whisper com keywords de culto + peso combinado
 - **M4** — NDI como fonte de áudio alternativa + polimento
 
