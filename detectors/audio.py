@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from typing import List
 
@@ -10,11 +11,11 @@ _WINDOW = 15600  # YAMNet espera 0.975s de áudio = 15600 amostras @ 16kHz
 
 def _load_names(class_map_path: str) -> List[str]:
     names = []
-    for row in Path(class_map_path).read_text(encoding="utf-8").splitlines()[1:]:
-        parts = row.split(",")
-        if len(parts) < 3:
-            continue
-        names.append(parts[2])  # formato: index,mid,display_name
+    with open(class_map_path, encoding="utf-8") as f:
+        for row in csv.reader(f):
+            if len(row) < 3:
+                continue
+            names.append(row[2])  # formato: index,mid,display_name
     return names
 
 
