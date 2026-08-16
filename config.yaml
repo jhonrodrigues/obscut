@@ -7,8 +7,8 @@ detector:
   hop_seconds: 1.0
   threshold: 0.5
   min_sustain_seconds: 2.0
-  # classes do AudioSet/YAMNet. Default: Applause (aplauso de congregação)
-  classes: ["Applause"]
+  # classes do AudioSet/YAMNet. Applause = aplauso real; Clapping ajuda no teste sintético
+  classes: ["Applause", "Clapping"]
 
 clipper:
   pre_seconds: 5

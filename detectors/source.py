@@ -13,6 +13,10 @@ class AudioTail:
         self.sample_rate = sample_rate
         self._proc: Optional[subprocess.Popen] = None
 
+    @property
+    def alive(self) -> bool:
+        return self._proc is not None and self._proc.poll() is None
+
     def start(self) -> None:
         cmd = [
             "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin",

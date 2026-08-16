@@ -14,10 +14,13 @@ from engine.score import MomentEngine
 def main() -> None:
     parser = argparse.ArgumentParser(description="OBS live clipper — M1")
     parser.add_argument("-c", "--config", default="config.yaml")
+    parser.add_argument("-f", "--file", help="override do caminho do MKV")
     args = parser.parse_args()
 
     with open(args.config, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
+    if args.file:
+        cfg["recording"]["file"] = args.file
 
     src = AudioTail(
         cfg["recording"]["file"],
@@ -38,6 +41,9 @@ def main() -> None:
     while not stop["flag"]:
         chunk = src.read(hop)
         if chunk is None:
+            if not src.alive:
+                print("[clipper] fim do arquivo — encerrando")
+                break
             time.sleep(hop)
             continue
         prob = detector.score(chunk)
